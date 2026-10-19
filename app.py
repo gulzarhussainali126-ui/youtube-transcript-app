@@ -12,7 +12,7 @@ if st.button("Transcript Nikalein"):
     if url:
         try:
             with st.spinner("Transcript nikaal rahe hain..."):
-                # Video ID nikalne ka asaan tareeqa
+                # Video ID nikalne ka tareeqa
                 if "youtu.be" in url:
                     video_id = url.split("/")[-1].split("?")[0]
                 elif "watch?v=" in url:
@@ -20,8 +20,14 @@ if st.button("Transcript Nikalein"):
                 else:
                     video_id = url.split("/")[-1]
 
-                # Transcript fetch karna
-                fetched_data = YouTubeTranscriptApi.get_transcript(video_id)
+                # Ab hum Hindi, Urdu aur English teeno languages allow kar rahe hain
+                try:
+                    fetched_data = YouTubeTranscriptApi.get_transcript(video_id, languages=['hi', 'ur', 'en'])
+                except:
+                    # Agar upar wali languages na milein, toh jo bhi auto-generated ho woh utha le
+                    transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
+                    transcript = transcript_list.find_generated_transcript(['hi', 'en', 'ur'])
+                    fetched_data = transcript.fetch()
                 
                 full_text = ""
                 for entry in fetched_data:
@@ -39,4 +45,4 @@ if st.button("Transcript Nikalein"):
         except Exception as e:
             st.error(f"Koi error aa gaya hai: {e}. Baraye meharbani dosra link try karein.")
     else:
-                    st.warning("Pehle YouTube ka link darj karein!")
+        st.warning("Pehle YouTube ka link darj karein!")
