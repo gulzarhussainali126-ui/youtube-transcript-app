@@ -29,18 +29,33 @@ if st.button("Transcript نکالیں"):
         if video_id:
             try:
                 with st.spinner("ٹرانسکرپٹ حاصل کیا جا رہا ہے..."):
-                    # یوٹیوب سے براہ راست ٹرانسکرپٹ نکالنا (اردو یا انگریزی جو بھی دستیاب ہو)
-                    transcript_list = YouTubeTranscriptApi.get_transcript(video_id, languages=['ur', 'hi', 'en'])
+                    # نیا اور محفوظ طریقہ ٹرانسکرپٹ حاصل کرنے کا
+                    transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
+                    
+                    # کوشش کریں کہ اردو، ہندی یا انگریزی کا ٹرانسکرپٹ مل جائے
+                    transcript = None
+                    for lang in ['ur', 'hi', 'en', 'auto']:
+                        try:
+                            transcript = transcript_list.find_transcript([lang])
+                            break
+                        except:
+                            continue
+                    
+                    if not transcript:
+                        # اگر مخصوص زبان نہ ملے تو جو بھی پہلی دستیاب ہو وہ لے لیں
+                        transcript = list(transcript_list)[0]
+                    
+                    transcript_data = transcript.fetch()
                     
                     full_text = ""
-                    for entry in transcript_list:
+                    for entry in transcript_data:
                         full_text += entry['text'] + " "
                     
                     st.success("ٹرانسکرپٹ کامیابی سے مل گیا ہے!")
                     st.subheader("Transcript Result:")
                     st.text_area("Result", full_text, height=350)
                     
-                    # کاپی کرنے یا ڈاؤن لوڈ کرنے کا بٹن
+                    # ڈاؤن لوڈ کرنے کا بٹن
                     st.download_button(
                         label="Transcript ڈاؤن لوڈ کریں (.txt)",
                         data=full_text,
@@ -52,4 +67,4 @@ if st.button("Transcript نکالیں"):
         else:
             st.warning("براہ کرم ایک درست YouTube لنک درج کریں!")
     else:
-        st.warning.warning("پہلے لنک درج کریں!") if 'warning' in dir(st) else st.warning("پہلے لنک درج کریں!")
+        st.warning("پہلے لنک درج کریں!")
