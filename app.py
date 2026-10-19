@@ -1,10 +1,11 @@
 import streamlit as st
 from youtube_transcript_api import YouTubeTranscriptApi
+import os
 
 st.set_page_config(page_title="YouTube Transcript Extractor", page_icon="🎙️")
 
-st.title("🎙️ YouTube Video Transcript Extractor")
-st.write("YouTube video ka link yahan dalein aur transcript hasil karein!")
+st.title("🎙️ YouTube Video Transcript Extractor (Cookie Enabled)")
+st.write("YouTube video ka link yahan dalein, ab cookies ki wajah se yeh block nahi hoga!")
 
 url = st.text_input("YouTube Video URL yahan enter karein:")
 
@@ -12,7 +13,7 @@ if st.button("Transcript Nikalein"):
     if url:
         try:
             with st.spinner("Transcript nikaal rahe hain..."):
-                # Video ID nikalne ka asaan tareeqa
+                # Video ID nikalne ka tareeqa
                 if "youtu.be" in url:
                     video_id = url.split("/")[-1].split("?")[0]
                 elif "watch?v=" in url:
@@ -20,32 +21,30 @@ if st.button("Transcript Nikalein"):
                 else:
                     video_id = url.split("/")[-1]
 
-                # Safe transcript fetching using list_transcripts
-                transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
+                # Agar cookies.txt file mojood hai toh usay istemal karein
+                cookie_file = "cookies.txt"
                 
-                transcript = None
-                for t in transcript_list:
-                    transcript = t
-                    break
-                
-                if transcript:
-                    fetched_data = transcript.fetch()
-                    full_text = ""
-                    for entry in fetched_data:
-                        full_text += entry['text'] + " "
-                    
-                    st.success("Transcript kamyabi se mil gaya hai!")
-                    st.text_area("Result Text", full_text, height=350)
-                    
-                    st.download_button(
-                        label="Download Transcript (.txt)",
-                        data=full_text,
-                        file_name=f"transcript_{video_id}.txt",
-                        mime="text/plain"
-                    )
+                if os.path.exists(cookie_file):
+                    # Cookies ke sath transcript fetch karna
+                    fetched_data = YouTubeTranscriptApi.get_transcript(video_id, cookies=cookie_file)
                 else:
-                    st.error("Is video ka transcript available nahi hai.")
+                    # Agar cookies file nahi mili toh aam tarike se koshish karein
+                    fetched_data = YouTubeTranscriptApi.get_transcript(video_id)
+                
+                full_text = ""
+                for entry in fetched_data:
+                    full_text += entry['text'] + " "
+                
+                st.success("Transcript kamyabi se mil gaya hai!")
+                st.text_area("Result Text", full_text, height=350)
+                
+                st.download_button(
+                    label="Download Transcript (.txt)",
+                    data=full_text,
+                    file_name=f"transcript_{video_id}.txt",
+                    mime="text/plain"
+                )
         except Exception as e:
-            st.error(f"Error: {e}. Baraye meharbani koi doosri popular video ka link try karein.")
+            st.error(f"Error aa gaya hai: {e}. Baraye meharbani check karein ke cookies file theek tarike se uploaded hai ya nahi.")
     else:
         st.warning("Pehle YouTube ka link darj karein!")
