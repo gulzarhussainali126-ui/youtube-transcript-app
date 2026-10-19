@@ -12,7 +12,7 @@ if st.button("Transcript Nikalein"):
     if url:
         try:
             with st.spinner("Transcript nikaal rahe hain..."):
-                # Video ID nikalne ka tareeqa
+                # Video ID nikalne ka asaan tareeqa
                 if "youtu.be" in url:
                     video_id = url.split("/")[-1].split("?")[0]
                 elif "watch?v=" in url:
@@ -20,29 +20,32 @@ if st.button("Transcript Nikalein"):
                 else:
                     video_id = url.split("/")[-1]
 
-                # Ab hum Hindi, Urdu aur English teeno languages allow kar rahe hain
-                try:
-                    fetched_data = YouTubeTranscriptApi.get_transcript(video_id, languages=['hi', 'ur', 'en'])
-                except:
-                    # Agar upar wali languages na milein, toh jo bhi auto-generated ho woh utha le
-                    transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
-                    transcript = transcript_list.find_generated_transcript(['hi', 'en', 'ur'])
+                # Safe transcript fetching using list_transcripts
+                transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
+                
+                transcript = None
+                for t in transcript_list:
+                    transcript = t
+                    break
+                
+                if transcript:
                     fetched_data = transcript.fetch()
-                
-                full_text = ""
-                for entry in fetched_data:
-                    full_text += entry['text'] + " "
-                
-                st.success("Transcript kamyabi se mil gaya hai!")
-                st.text_area("Result Text", full_text, height=350)
-                
-                st.download_button(
-                    label="Download Transcript (.txt)",
-                    data=full_text,
-                    file_name=f"transcript_{video_id}.txt",
-                    mime="text/plain"
-                )
+                    full_text = ""
+                    for entry in fetched_data:
+                        full_text += entry['text'] + " "
+                    
+                    st.success("Transcript kamyabi se mil gaya hai!")
+                    st.text_area("Result Text", full_text, height=350)
+                    
+                    st.download_button(
+                        label="Download Transcript (.txt)",
+                        data=full_text,
+                        file_name=f"transcript_{video_id}.txt",
+                        mime="text/plain"
+                    )
+                else:
+                    st.error("Is video ka transcript available nahi hai.")
         except Exception as e:
-            st.error(f"Koi error aa gaya hai: {e}. Baraye meharbani dosra link try karein.")
+            st.error(f"Error: {e}. Baraye meharbani koi doosri popular video ka link try karein.")
     else:
         st.warning("Pehle YouTube ka link darj karein!")
