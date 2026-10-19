@@ -7,7 +7,6 @@ st.set_page_config(page_title="YouTube Transcript Extractor", page_icon="🎙️
 st.title("🎙️ YouTube Video Transcript Extractor")
 st.write("کسی بھی YouTube ویڈیو کا لنک یہاں درج کریں اور سیکنڈوں میں اس کا ٹرانسکرپٹ حاصل کریں!")
 
-# یوٹیوب لنک سے ویڈیو کی ID نکالنے کا فنکشن
 def extract_video_id(url):
     parsed_url = urlparse(url)
     if parsed_url.hostname == 'youtu.be':
@@ -20,7 +19,6 @@ def extract_video_id(url):
             return parsed_url.path.split('/')[2]
     return None
 
-# صارف سے ان پٹ لینا
 url = st.text_input("YouTube Video URL یہاں درج کریں:")
 
 if st.button("Transcript نکالیں"):
@@ -29,33 +27,17 @@ if st.button("Transcript نکالیں"):
         if video_id:
             try:
                 with st.spinner("ٹرانسکرپٹ حاصل کیا جا رہا ہے..."):
-                    # نیا اور محفوظ طریقہ ٹرانسکرپٹ حاصل کرنے کا
-                    transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
-                    
-                    # کوشش کریں کہ اردو، ہندی یا انگریزی کا ٹرانسکرپٹ مل جائے
-                    transcript = None
-                    for lang in ['ur', 'hi', 'en', 'auto']:
-                        try:
-                            transcript = transcript_list.find_transcript([lang])
-                            break
-                        except:
-                            continue
-                    
-                    if not transcript:
-                        # اگر مخصوص زبان نہ ملے تو جو بھی پہلی دستیاب ہو وہ لے لیں
-                        transcript = list(transcript_list)[0]
-                    
-                    transcript_data = transcript.fetch()
+                    # براہ راست حاصل کرنے کا بہترین طریقہ
+                    fetched_data = YouTubeTranscriptApi.get_transcript(video_id)
                     
                     full_text = ""
-                    for entry in transcript_data:
+                    for entry in fetched_data:
                         full_text += entry['text'] + " "
                     
                     st.success("ٹرانسکرپٹ کامیابی سے مل گیا ہے!")
                     st.subheader("Transcript Result:")
                     st.text_area("Result", full_text, height=350)
                     
-                    # ڈاؤن لوڈ کرنے کا بٹن
                     st.download_button(
                         label="Transcript ڈاؤن لوڈ کریں (.txt)",
                         data=full_text,
@@ -63,7 +45,7 @@ if st.button("Transcript نکالیں"):
                         mime="text/plain"
                     )
             except Exception as e:
-                st.error(f"اس ویڈیو کا ٹرانسکرپٹ دستیاب نہیں ہے یا لنک غلط ہے۔ (وجہ: {e})")
+                st.error(f"اس ویڈیو کا ٹرانسکرپٹ دستیاب نہیں ہے یا اس پر سب ٹائٹلز آف ہیں۔ (وجہ: {e})")
         else:
             st.warning("براہ کرم ایک درست YouTube لنک درج کریں!")
     else:
